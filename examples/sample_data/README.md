@@ -6,22 +6,9 @@ on, and deliberately so. Their job is to show the column names and types, not
 to be a dataset.
 
 Nothing in the pipeline writes here. `DATA_DIR` defaults to `data/` at the repo
-root, which is git-ignored, so a run cannot modify anything committed.
-
-That separation is new, and it is the fix for a specific class of bug. This
-directory used to be `DATA_DIR` as well, so every run wrote derived parquet
-alongside these files — and two of those derived files were committed:
-
-- `features/forecast_deepar.parquet`, which **no code in this repository has
-  ever written** (the DeepAR trainer is a stub that raises), yet
-  `ensemble_and_reconcile` loaded it and blended 36 rows of numbers from a
-  dead toy dataset into every local ensemble run;
-- `features/features.parquet`, which still carried the pre-2026-09
-  `rolling_4w_mean` column — the *leaking* trailing window that included the
-  week it described.
-
-Both are deleted. Both also now have a structural defence, because deleting a
-file does not stop the next one appearing:
+root, which is git-ignored, so a run cannot modify anything committed and no
+derived file can sit beside these, go stale and be read back later. Two
+structural checks back that up:
 
 - `src/models/registry.py` is the source of truth for which models exist. A
   `forecast_*.parquet` that no registered forecaster produces is reported as
@@ -31,7 +18,7 @@ file does not stop the next one appearing:
   `load_feature_table()` refuses a table that does not match the registry that
   is compiled in.
 
-## Getting real data
+## Generating a full dataset
 
 ```bash
 python -m scripts.generate_sample_data --weeks 130 --seed 7
