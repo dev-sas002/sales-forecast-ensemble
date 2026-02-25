@@ -1,0 +1,14 @@
+# Kept as an alias so `pip install -r requirements.txt` still does the right
+# thing. The real lists are split by purpose:
+#
+#   requirements-core.txt   what the pipeline, API and dashboard import
+#   requirements-dev.txt    pytest, httpx, ruff
+#
+# This file used to pin a different, larger set — psutil, seaborn, matplotlib,
+# sqlalchemy, xgboost, pymc, gluonts, airflow — none of which is imported
+# anywhere in the repository, and one of which (psutil==5.9.5) has no wheel for
+# Python 3.11 and fails to build. Installing from it produced an environment
+# that took minutes to resolve and still did not match the one the Docker image
+# and the tests use.
+
+-r requirements-core.txt

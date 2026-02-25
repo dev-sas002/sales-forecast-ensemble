@@ -1,0 +1,41 @@
+# Everything the pipeline, the API and the dashboard actually import.
+#
+# Trimmed from the original list, which pinned psutil, seaborn, matplotlib,
+# sqlalchemy and xgboost — none of which appear in a single import anywhere in
+# the repo, and one of which (psutil 5.9.5) has no wheel for Python 3.11 and
+# broke the image build outright. It went unnoticed because the Dockerfile
+# ended its install with `|| true`.
+
+pandas==2.1.2
+numpy==1.26.2
+pyarrow==12.0.1          # pandas' parquet engine
+
+lightgbm==4.4.0          # quantile forecaster
+
+# FastAPI on pydantic v2. The previous pin (0.99.1) predates v2 and forced the
+# whole image onto pydantic v1.
+fastapi==0.115.0
+uvicorn==0.30.6
+pydantic==2.9.2
+
+# Dashboard
+streamlit==1.38.0
+plotly==5.24.1
+requests==2.32.3
+
+# ---------------------------------------------------------------- optional --
+#
+# Nothing below is needed to run the pipeline, the API, the dashboard or the
+# tests. Each is imported lazily, inside the function that needs it, and its
+# absence is a supported configuration rather than a failure.
+#
+# AI forecast narration (POST /explain, and the dashboard's "Explain this
+# forecast" button). Without it — or without ANTHROPIC_API_KEY — the same
+# facts are rendered from a template and every endpoint still returns 200.
+#   pip install anthropic
+#
+# MLflow experiment tracking, used by src/mlops/mlflow_utils.py:
+#   pip install mlflow==2.16.2
+#
+# Genuinely optional, heavy, and unused by default:
+#   pymc==5.9.2  arviz==0.16.0  gluonts==0.14.0  apache-airflow  feast
