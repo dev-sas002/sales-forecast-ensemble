@@ -1,0 +1,57 @@
+[project]
+name = "sku-forecasting"
+version = "0.2.0"
+description = "Quantile demand forecasting for SKU x region weekly sales"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", "project_venv", "artifacts", "data"]
+
+[tool.ruff.lint]
+# A deliberately small, enforceable set. Every rule here is one the codebase
+# actually holds to — a linter configured with rules the project violates is
+# a linter nobody runs.
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # import ordering
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "SIM",  # simplify
+    "RET",  # return hygiene
+    "ARG",  # unused arguments
+    "PTH",  # pathlib over os.path
+    "RUF",
+]
+ignore = [
+    "E501",    # line length is handled by the formatter, not by failing CI
+    "B008",    # FastAPI's Depends()/Field() idiom is a call in a default
+    "RUF001",  # the prose in docstrings uses real typographic characters
+    "RUF002",
+    "RUF003",
+    # `KEYS + ["week"]` reads as "the series keys, then the week" and is the
+    # established idiom for building a groupby/sort key list throughout this
+    # codebase. `[*KEYS, "week"]` is equivalent and, at nineteen call sites,
+    # is churn that makes no diff easier to read.
+    "RUF005",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Airflow's DAG file is declarative: the task callables take **kwargs they do
+# not read, because that is the operator contract.
+"dags/*.py" = ["ARG001"]
+# Tests name fixtures after what they provide and do not always consume them.
+"tests/*.py" = ["ARG001", "ARG002"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    # starlette's TestClient touches a deprecated anyio alias; not our code.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+]
