@@ -132,8 +132,9 @@ def render_template(facts: ForecastFacts) -> str:
         )
 
     if facts.drivers:
-        named = ", ".join(d.description for d in facts.drivers[:3])
-        parts.append(f"The largest influences on the median were {named}.")
+        named = [f"{d.description} ({d.contribution:+,.0f})" for d in facts.drivers[:3]]
+        listed = named[0] if len(named) == 1 else ", ".join(named[:-1]) + " and " + named[-1]
+        parts.append(f"The largest influences on the median, in units a week, were {listed}.")
 
     if facts.interval_width_pct:
         parts.append(

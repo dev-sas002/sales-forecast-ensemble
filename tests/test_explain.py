@@ -184,6 +184,17 @@ class TestDegradationWithoutAKey:
         assert "0.238" in text  # the measured WAPE
         assert "27%" in text or "28%" in text  # the derived lift
 
+    def test_the_template_gives_each_driver_its_signed_size(self):
+        facts = build_facts(
+            "SKU-1",
+            "NE",
+            forecast_rows([25.0] * 4),
+            drivers=[("roll_4w_mean", -6.2), ("lag_52_units", 3.4)],
+        )
+        text = render_template(facts)
+        assert "the trailing four-week average (-6)" in text
+        assert "and the same week last year (+3)" in text
+
     def test_the_template_mentions_flagged_inputs(self):
         units = [150.0] * 20 + [0.0] * 5 + [150.0] * 20
         facts = build_facts("SKU-1", "NE", forecast_rows([150.0] * 4), history=history_rows(units))
