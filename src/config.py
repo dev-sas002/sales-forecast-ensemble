@@ -33,7 +33,9 @@ DATA_DIR = _data_dir()
 RAW_DIR = DATA_DIR / "raw"
 LANDING_DIR = DATA_DIR / "landing"
 FEATURE_DIR = DATA_DIR / "features"
-MODEL_DIR = ROOT / "artifacts" / "models"
+#: Trained boosters. Overridable so containers that share DATA_DIR on a volume
+#: can share the model the seed job trained, too.
+MODEL_DIR = Path(os.environ.get("MODEL_DIR", str(ROOT / "artifacts" / "models")))
 
 #: Committed input examples. Read-only by convention — the pipeline never
 #: writes here, so nothing in it can go stale against the code.

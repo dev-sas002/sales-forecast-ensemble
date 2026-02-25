@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-from src.config import FEATURE_DIR, LANDING_DIR
+from src.config import FEATURE_DIR, LANDING_DIR, MODEL_DIR
 from src.dashboard.data import (
     backtest_frames,
     build_forecast_view,
@@ -33,6 +33,7 @@ from src.dashboard.data import (
     series_options,
 )
 from src.explain import build_facts, explain, narrator_status
+from src.explain.drivers import series_drivers
 
 # The dashboard and the API run in separate containers, so "localhost" is the
 # dashboard itself, not the API. docker-compose sets API_URL to
@@ -447,11 +448,18 @@ def tab_forecast(data) -> None:
     with explain_col:
         st.markdown("**What the model is saying**")
         summary = (data.backtest or {}).get("summary")
+        has_series = not view.series.empty
+        drivers = (
+            series_drivers(view.series, sku, region, len(view.forecast), MODEL_DIR)
+            if has_series
+            else []
+        )
         facts = build_facts(
             sku,
             region,
             view.forecast,
-            history=view.history if not view.history.empty else None,
+            history=view.series if has_series else None,
+            drivers=drivers,
             backtest=summary,
         )
         text, source, model = _explanation(

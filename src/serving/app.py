@@ -20,8 +20,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from src.config import FEATURE_DIR, quantile_cols
+from src.config import FEATURE_DIR, MODEL_DIR, quantile_cols
 from src.explain import build_facts, explain, narrator_status
+from src.explain.drivers import series_drivers
 from src.models import registry
 from src.quality.anomalies import detect, summarise
 from src.serving import store
@@ -128,20 +129,22 @@ async def explain_forecast(q: Query):
     rows = _series_rows(q)
 
     history = None
+    drivers: list[tuple[str, float]] = []
     features = FEATURE_DIR / "features.parquet"
     if features.exists():
         try:
-            table = pd.read_parquet(
-                features, columns=["sku", "region", "week", "units_sold", "avg_price"]
+            history = pd.read_parquet(
+                features, filters=[("sku", "==", q.sku), ("region", "==", q.region)]
             )
-            history = table[(table["sku"] == q.sku) & (table["region"] == q.region)]
         except (OSError, ValueError, KeyError):
             # An unreadable or older feature table costs the comparison
             # against recent trading, not the endpoint.
             history = None
+    if history is not None and not history.empty:
+        drivers = series_drivers(history, q.sku, q.region, len(rows), MODEL_DIR)
 
     backtest = _backtest_summary()
-    facts = build_facts(q.sku, q.region, rows, history=history, backtest=backtest)
+    facts = build_facts(q.sku, q.region, rows, history=history, drivers=drivers, backtest=backtest)
     note = explain(facts)
 
     return {

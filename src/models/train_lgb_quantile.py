@@ -166,18 +166,14 @@ def predict_quantiles(
     return out.reset_index(drop=True)
 
 
-def forecast_from_last_origin(
-    models: dict[float, lgb.Booster],
-    features: pd.DataFrame,
-    horizon: int,
-    widen: float = 0.0,
-) -> pd.DataFrame:
+def future_panel(features: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """
-    Forecast forward from each series' most recent week.
+    The rows to forecast: each series' most recent week as the origin, once
+    per horizon 1..`horizon`.
 
     The training panel drops rows whose target is unknown, which is exactly the
-    future we want to predict — so the forecast rows are rebuilt here from the
-    last observed origin rather than reused from training.
+    future we want to predict, so these rows are rebuilt from the last observed
+    origin rather than reused from training.
     """
     hist_cols = history_columns(features)
     last = (
@@ -199,31 +195,38 @@ def forecast_from_last_origin(
     future["target_weekofyear"] = dates.dt.isocalendar().week.astype(int)
     future["target_month"] = dates.dt.month.astype(int)
     future["target_week"] = future["date"]
+    return future
 
-    return predict_quantiles(models, future, widen=widen)
+
+def forecast_from_last_origin(
+    models: dict[float, lgb.Booster],
+    features: pd.DataFrame,
+    horizon: int,
+    widen: float = 0.0,
+) -> pd.DataFrame:
+    """Forecast `horizon` weeks forward from each series' most recent week."""
+    return predict_quantiles(models, future_panel(features, horizon), widen=widen)
 
 
 def feature_contributions(
     model: lgb.Booster, panel: pd.DataFrame, top_n: int = 5
-) -> list[list[tuple[str, float]]]:
+) -> list[tuple[str, float]]:
     """
-    Per-row feature attributions from LightGBM's own `pred_contrib`.
+    The features that moved `model`'s predictions over `panel` the most.
 
-    Exact tree SHAP values, not a surrogate: each row's contributions plus the
-    base value sum to that row's prediction. This is what the explanation
-    layer narrates, which is what keeps the narrative tied to the model rather
-    than to a plausible story about it.
+    Uses LightGBM's own `pred_contrib`: exact tree SHAP values, where each
+    row's contributions plus the base value sum to that row's prediction.
+    Contributions are averaged over the rows (the weeks of one forecast), so
+    each pair reads as "this feature moved the average week by N units".
     """
+    if panel.empty:
+        return []
     X, cols = feature_matrix(panel)
-    contrib = model.predict(X, pred_contrib=True)
+    contrib = np.asarray(model.predict(X, pred_contrib=True))
     # The final column is the base value; the rest align with `cols`.
-    values = np.asarray(contrib)[:, :-1]
-
-    out = []
-    for row in values:
-        order = np.argsort(-np.abs(row))[:top_n]
-        out.append([(cols[i], float(row[i])) for i in order])
-    return out
+    mean = contrib[:, :-1].mean(axis=0)
+    order = np.argsort(-np.abs(mean))[:top_n]
+    return [(cols[i], float(mean[i])) for i in order]
 
 
 @registry.register

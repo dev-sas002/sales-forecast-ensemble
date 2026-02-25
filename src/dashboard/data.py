@@ -171,6 +171,9 @@ class ForecastView:
     history: pd.DataFrame
     forecast: pd.DataFrame
     anomalies: pd.DataFrame
+    #: Every week of the series. `history` is the plotted tail; seasonal
+    #: comparisons and driver attribution need the whole thing.
+    series: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     @property
     def total(self) -> float:
@@ -210,19 +213,25 @@ def build_forecast_view(
     forecast = forecast.sort_values("date")
 
     history = pd.DataFrame(columns=["week", "units_sold"])
+    series = history
     anomalies = detect(history.assign(sku=sku, region=region).head(0))
     if data.features is not None:
-        series = data.features[
+        found = data.features[
             (data.features["sku"] == sku) & (data.features["region"] == region)
         ].copy()
-        if not series.empty:
-            series["week"] = pd.to_datetime(series["week"])
-            series = series.sort_values("week")
+        if not found.empty:
+            found["week"] = pd.to_datetime(found["week"])
+            series = found.sort_values("week")
             anomalies = detect(series)
             history = series.tail(history_weeks)
 
     return ForecastView(
-        sku=sku, region=region, history=history, forecast=forecast, anomalies=anomalies
+        sku=sku,
+        region=region,
+        history=history,
+        forecast=forecast,
+        anomalies=anomalies,
+        series=series,
     )
 
 

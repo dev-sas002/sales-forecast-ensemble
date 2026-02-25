@@ -16,6 +16,7 @@ services:
     command: ["python", "-m", "scripts.run_pipeline", "--weeks", "130", "--horizon", "12"]
     environment:
       DATA_DIR: /data
+      MODEL_DIR: /data/models
       HASH_SALT: local-dev-salt-not-a-secret
       MLFLOW_TRACKING_URI: ""
     volumes: ["forecast_data:/data"]
@@ -27,6 +28,7 @@ services:
     ports: ["8360:8000"]
     environment:
       DATA_DIR: /data
+      MODEL_DIR: /data/models
       HASH_SALT: local-dev-salt-not-a-secret
       MLFLOW_TRACKING_URI: ""
       # Optional. Unset, /explain returns a template-rendered note and every
@@ -57,6 +59,7 @@ services:
     ports: ["8361:8501"]
     environment:
       DATA_DIR: /data
+      MODEL_DIR: /data/models
       # "localhost" inside this container is the dashboard, not the API.
       API_URL: http://api:8000
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
