@@ -39,19 +39,20 @@ from src.explain.drivers import series_drivers
 # http://api:8000; this is the code that reads it.
 DEFAULT_API_URL = os.environ.get("API_URL", "http://localhost:8000")
 
-# One palette, defined once. Colour carries meaning here — the same blue means
-# "the model" in every chart, the same amber means "uncertainty" — which is
-# what makes four charts readable as one system rather than four pictures.
-INK = "#1a2332"
-MUTED = "#5b6b7f"
-ACCENT = "#2563eb"
-ACCENT_SOFT = "rgba(37, 99, 235, 0.16)"
-WARN = "#c2410c"
-GOOD = "#047857"
-GRID = "rgba(120, 140, 165, 0.18)"
+# One palette, defined once, taken from a stock ledger: pine ink for the
+# model, ochre for uncertainty, brick for anything a planner should check.
+# Colour carries the same meaning in every chart, and every pairing with the
+# paper background clears WCAG AA for text.
+INK = "#1d2a27"
+MUTED = "#55625e"
+ACCENT = "#1f6f5c"
+BAND = "rgba(196, 135, 30, 0.26)"
+WARN = "#a63d2a"
+GRID = "rgba(29, 42, 39, 0.10)"
+FONT_STACK = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif"
 
 PLOT_LAYOUT = {
-    "font": {"family": "-apple-system, Segoe UI, Roboto, sans-serif", "color": INK},
+    "font": {"family": FONT_STACK, "color": INK},
     "paper_bgcolor": "rgba(0,0,0,0)",
     "plot_bgcolor": "rgba(0,0,0,0)",
     # No Plotly titles anywhere in this file — every chart heading is Streamlit
@@ -66,7 +67,7 @@ PLOT_LAYOUT = {
 
 st.set_page_config(
     page_title="SKU Demand Forecasting",
-    page_icon="📈",
+    page_icon=":material/inventory_2:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -74,21 +75,39 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-  .block-container { padding-top: 2.2rem; max-width: 1400px; }
-  h1, h2, h3 { letter-spacing: -0.01em; }
-  .hero { border-bottom: 1px solid rgba(120,140,165,.22); padding-bottom: 1rem;
-          margin-bottom: 1.4rem; }
-  .hero h1 { font-size: 1.85rem; margin: 0 0 .3rem 0; font-weight: 650; }
-  .hero p  { color: #5b6b7f; margin: 0; font-size: .95rem; }
-  .note { background: rgba(37,99,235,.06); border-left: 3px solid #2563eb;
-          padding: .85rem 1rem; border-radius: 0 6px 6px 0; margin: .6rem 0 1rem; }
-  .warn { background: rgba(194,65,12,.07); border-left: 3px solid #c2410c;
-          padding: .85rem 1rem; border-radius: 0 6px 6px 0; margin: .6rem 0 1rem; }
-  .stTabs [data-baseweb="tab-list"] { gap: .35rem; }
-  .stTabs [data-baseweb="tab"] { padding: .55rem 1rem; font-size: .92rem; }
-  div[data-testid="stMetricValue"] { font-size: 1.55rem; }
-  div[data-testid="stMetricLabel"] { color: #5b6b7f; }
-  section[data-testid="stSidebar"] { border-right: 1px solid rgba(120,140,165,.2); }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  html, body, [class*="st-"], .stMarkdown, button, input, textarea {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  .block-container { padding-top: 2rem; padding-left: 1rem; padding-right: 1rem;
+                     max-width: 1360px; }
+  h1, h2, h3 { letter-spacing: -0.01em; color: #1d2a27; }
+  .hero { border-bottom: 2px solid #1d2a27; padding-bottom: .9rem; margin-bottom: 1.4rem; }
+  .hero .kicker { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: .78rem;
+                  letter-spacing: .08em; text-transform: uppercase; color: #1f6f5c;
+                  margin: 0 0 .35rem 0; }
+  .hero h1 { font-size: clamp(1.45rem, 3.2vw, 1.95rem); margin: 0 0 .3rem 0; font-weight: 600; }
+  .hero p  { color: #55625e; margin: 0; font-size: .95rem; max-width: 62ch; }
+  .note { background: #ece8dc; border-left: 3px solid #1f6f5c;
+          padding: .85rem 1rem; border-radius: 0 4px 4px 0; margin: .6rem 0 1rem; }
+  .warn { background: #f4e3dc; border-left: 3px solid #a63d2a;
+          padding: .85rem 1rem; border-radius: 0 4px 4px 0; margin: .6rem 0 1rem; }
+  .stage { display: flex; gap: .5rem; align-items: baseline; margin: .2rem 0; }
+  .stage .mark { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: .72rem;
+                 padding: .05rem .4rem; border-radius: 3px; border: 1px solid currentColor; }
+  .stage .done { color: #1f6f5c; }
+  .stage .todo { color: #55625e; }
+  .stage .detail { color: #55625e; font-size: .85rem; }
+  .stTabs [data-baseweb="tab-list"] { gap: .35rem; flex-wrap: wrap; }
+  .stTabs [data-baseweb="tab"] { padding: .55rem .9rem; font-size: .92rem; }
+  div[data-testid="stMetricValue"] { font-family: 'IBM Plex Mono', ui-monospace, monospace;
+                                     font-size: 1.45rem; }
+  div[data-testid="stMetricLabel"] { color: #55625e; }
+  section[data-testid="stSidebar"] { border-right: 1px solid rgba(29,42,39,.15); }
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  [role="tab"]:focus-visible, [role="radio"]:focus-visible {
+    outline: 2px solid #1f6f5c; outline-offset: 2px;
+  }
 </style>
 """,
     unsafe_allow_html=True,
@@ -142,10 +161,14 @@ def _empty_state(title: str, command: str, why: str) -> None:
 def render_sidebar(data) -> None:
     st.sidebar.markdown("### Pipeline")
     for stage in pipeline_stages(data):
-        icon = "✅" if stage.done else "⬜️"
-        detail = f" — {stage.detail}" if stage.detail else ""
+        mark = (
+            "<span class='mark done'>done</span>"
+            if stage.done
+            else "<span class='mark todo'>todo</span>"
+        )
+        detail = f"<span class='detail'>{stage.detail}</span>" if stage.detail else ""
         st.sidebar.markdown(
-            f"{icon} **{stage.name}**<span style='color:{MUTED};font-size:.85rem'>{detail}</span>",
+            f"<div class='stage'>{mark}<strong>{stage.name}</strong>{detail}</div>",
             unsafe_allow_html=True,
         )
 
@@ -205,7 +228,7 @@ def tab_overview(data) -> None:
             mode="lines",
             line={"color": ACCENT, "width": 2},
             fill="tozeroy",
-            fillcolor=ACCENT_SOFT,
+            fillcolor=BAND,
             name="units",
         )
     )
@@ -226,9 +249,7 @@ def tab_overview(data) -> None:
     with right:
         st.markdown("**Units by SKU**")
         by_sku = credit.groupby("sku")["quantity"].sum().sort_values()
-        fig = go.Figure(
-            go.Bar(x=by_sku.values, y=by_sku.index, orientation="h", marker_color=MUTED)
-        )
+        fig = go.Figure(go.Bar(x=by_sku.values, y=by_sku.index, orientation="h", marker_color=INK))
         st.plotly_chart(
             _styled(fig, height=260, xaxis_title="units"),
             width="stretch",
@@ -418,7 +439,7 @@ def tab_forecast(data) -> None:
             mode="lines",
             line={"color": "rgba(0,0,0,0)"},
             fill="tonexty",
-            fillcolor=ACCENT_SOFT,
+            fillcolor=BAND,
             name="80% interval",
         )
     )
@@ -760,7 +781,7 @@ def tab_api(data) -> None:
                     mode="lines",
                     line={"color": "rgba(0,0,0,0)"},
                     fill="tonexty",
-                    fillcolor=ACCENT_SOFT,
+                    fillcolor=BAND,
                     name="80% interval",
                 )
             )
@@ -784,9 +805,10 @@ def tab_api(data) -> None:
 
 def main() -> None:
     st.markdown(
-        "<div class='hero'><h1>SKU × Region demand forecasting</h1>"
-        "<p>Weekly quantile forecasts with calibrated prediction intervals, "
-        "scored against a baseline they have to beat.</p></div>",
+        "<header class='hero'><p class='kicker'>Weekly demand plan</p>"
+        "<h1>SKU × region forecasts</h1>"
+        "<p>Median units and a calibrated 80% band for every series, scored "
+        "against last year's same week before anyone orders against them.</p></header>",
         unsafe_allow_html=True,
     )
 

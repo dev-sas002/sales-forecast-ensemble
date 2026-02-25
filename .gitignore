@@ -50,7 +50,6 @@ venv.bak/
 
 # Streamlit
 .streamlit/secrets.toml
-.streamlit/config.toml
 
 # Pipeline working directory. Everything under it is derived from the code
 # plus a seed, so committing any of it invites the exact failure this repo
