@@ -1,23 +1,18 @@
 # syntax=docker/dockerfile:1
 #
-# Two stages. The builder compiles wheels; the runtime gets the wheels and the
-# source and nothing else — no compiler, no pip cache, no dev headers.
+# Two stages. The builder collects wheels; the runtime gets the wheels and the
+# source and nothing else — no pip cache, no build tooling.
 #
-# Python 3.11: the pinned scientific stack (numpy 1.26, pandas 2.1) has no
-# wheels for 3.13+, and building it from source in a container is not a thing
-# anyone should wait for.
+# Python 3.13, matching .python-version. Every pinned package ships a wheel
+# for it, so the builder needs no compiler.
 
 # ---------------------------------------------------------------- builder ---
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 
 WORKDIR /wheels
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential \
- && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-core.txt requirements-dev.txt ./
 # No `|| true`: a failed dependency install must fail the build, not ship an
@@ -25,7 +20,7 @@ COPY requirements-core.txt requirements-dev.txt ./
 RUN pip wheel --wheel-dir /wheels -r requirements-core.txt -r requirements-dev.txt
 
 # ---------------------------------------------------------------- runtime ---
-FROM python:3.11-slim AS runtime
+FROM python:3.13-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

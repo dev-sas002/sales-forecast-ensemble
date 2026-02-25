@@ -210,7 +210,7 @@ def tab_overview(data) -> None:
         )
     )
     st.markdown("**Weekly units across the catalogue**")
-    st.plotly_chart(_styled(fig, height=300, yaxis_title="units"), use_container_width=True)
+    st.plotly_chart(_styled(fig, height=300, yaxis_title="units"), width="stretch")
 
     left, right = st.columns(2)
     with left:
@@ -221,7 +221,7 @@ def tab_overview(data) -> None:
         )
         st.plotly_chart(
             _styled(fig, height=260, xaxis_title="units"),
-            use_container_width=True,
+            width="stretch",
         )
     with right:
         st.markdown("**Units by SKU**")
@@ -231,11 +231,11 @@ def tab_overview(data) -> None:
         )
         st.plotly_chart(
             _styled(fig, height=260, xaxis_title="units"),
-            use_container_width=True,
+            width="stretch",
         )
 
     with st.expander("Sample transactions"):
-        st.dataframe(credit.head(12), use_container_width=True, hide_index=True)
+        st.dataframe(credit.head(12), width="stretch", hide_index=True)
 
 
 def tab_linkage(data) -> None:
@@ -281,7 +281,7 @@ def tab_linkage(data) -> None:
     sample = data.linked[cols].head(8).copy()
     if "cust_hash" in sample:
         sample["cust_hash"] = sample["cust_hash"].str.slice(0, 16) + "…"
-    st.dataframe(sample, use_container_width=True, hide_index=True)
+    st.dataframe(sample, width="stretch", hide_index=True)
 
 
 def tab_features(data) -> None:
@@ -315,7 +315,7 @@ def tab_features(data) -> None:
         unsafe_allow_html=True,
     )
 
-    st.dataframe(feature_glossary(features), use_container_width=True, hide_index=True)
+    st.dataframe(feature_glossary(features), width="stretch", hide_index=True)
 
     pairs = features[["sku", "region"]].drop_duplicates()
     left, right = st.columns(2)
@@ -355,7 +355,7 @@ def tab_features(data) -> None:
                 )
             )
     st.markdown(f"**{sku} · {region} — actuals against trailing means**")
-    st.plotly_chart(_styled(fig, height=360, yaxis_title="units"), use_container_width=True)
+    st.plotly_chart(_styled(fig, height=360, yaxis_title="units"), width="stretch")
 
 
 def tab_forecast(data) -> None:
@@ -440,7 +440,7 @@ def tab_forecast(data) -> None:
             opacity=0.6,
         )
     st.markdown(f"**{sku} · {region} — history and forecast**")
-    st.plotly_chart(_styled(fig, height=390, yaxis_title="units"), use_container_width=True)
+    st.plotly_chart(_styled(fig, height=390, yaxis_title="units"), width="stretch")
 
     explain_col, table_col = st.columns([3, 2])
 
@@ -492,7 +492,7 @@ def tab_forecast(data) -> None:
                     "high (p90)": "{:,.0f}",
                 }
             ),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=360,
         )
@@ -536,13 +536,13 @@ def tab_quality(data) -> None:
     by_kind = found["kind"].value_counts().sort_values()
     fig = go.Figure(go.Bar(x=by_kind.values, y=by_kind.index, orientation="h", marker_color=WARN))
     st.markdown("**Findings by kind**")
-    st.plotly_chart(_styled(fig, height=220, xaxis_title="findings"), use_container_width=True)
+    st.plotly_chart(_styled(fig, height=220, xaxis_title="findings"), width="stretch")
 
     display = found.head(40).copy()
     display["week"] = pd.to_datetime(display["week"]).dt.strftime("%Y-%m-%d")
     st.dataframe(
         display[["sku", "region", "week", "kind", "severity", "detail"]],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=420,
     )
@@ -645,7 +645,7 @@ def tab_model_quality(data) -> None:
             },
         )
         st.markdown("**Accuracy and coverage by forecast horizon**")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     if not folds.empty:
         st.markdown("**Per-fold detail**")
@@ -672,7 +672,7 @@ def tab_model_quality(data) -> None:
                     "calibrated_coverage": "{:.1%}",
                 }
             ),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -775,7 +775,7 @@ def tab_api(data) -> None:
             )
             st.plotly_chart(
                 _styled(fig, height=320, yaxis_title="units"),
-                use_container_width=True,
+                width="stretch",
             )
 
         with st.expander("Raw response"):

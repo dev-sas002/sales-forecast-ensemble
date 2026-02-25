@@ -130,7 +130,7 @@ def test_aggregate_weekly_labels_weeks_with_their_monday() -> None:
     )
     week = pd.Timestamp(weekly["week"].iloc[0])
     assert week == pd.Timestamp("2025-01-06")
-    assert week.dayofweek == 0, "week labels must be Mondays"
+    assert week.day_of_week == 0, "week labels must be Mondays"
 
 
 def test_aggregate_weekly_keeps_series_separate() -> None:

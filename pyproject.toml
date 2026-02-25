@@ -2,11 +2,11 @@
 name = "sku-forecasting"
 version = "0.2.0"
 description = "Quantile demand forecasting for SKU x region weekly sales"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py313"
 extend-exclude = [".venv", "project_venv", "artifacts", "data"]
 
 [tool.ruff.lint]
@@ -51,7 +51,4 @@ known-first-party = ["src", "scripts"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-filterwarnings = [
-    # starlette's TestClient touches a deprecated anyio alias; not our code.
-    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
-]
+filterwarnings = ["error::DeprecationWarning:src.*"]

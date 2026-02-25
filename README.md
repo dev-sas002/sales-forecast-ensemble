@@ -29,10 +29,10 @@ LightGBM is not bit-identical across platforms, so expect the third decimal to d
 
 ## Running locally
 
-Python 3.11 (pinned pyarrow 12 has no 3.12 wheel), plus OpenMP for LightGBM: `brew install libomp` or `libgomp1`.
+Python 3.13 (`.python-version`), plus OpenMP for LightGBM: `brew install libomp` or `libgomp1`.
 
 ```bash
-python3.11 -m venv .venv && source .venv/bin/activate
+python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-core.txt -r requirements-dev.txt
 python -m scripts.run_pipeline --weeks 130 --horizon 12   # generate data, ingest, link, features, train, ensemble
 python -m src.evaluation.backtest --folds 4 --horizon 8   # the table above
