@@ -101,6 +101,17 @@ class TestFactsAreArithmetic:
         # q0.9 - q0.1 = 130 - 70 = 60, over a median of 100.
         assert facts.interval_width_pct == pytest.approx(0.6)
 
+    def test_a_window_across_new_year_is_compared_with_past_winters(self):
+        # Two years of history: 200 units in weeks 50-52 and 1-3, 100 otherwise.
+        weeks = pd.date_range("2024-01-01", periods=104, freq="W-MON")
+        winter = weeks.isocalendar().week.isin([50, 51, 52, 1, 2, 3]).to_numpy()
+        history = history_rows(np.where(winter, 200.0, 100.0))
+        # Forecast weeks 50, 51, 52, 1, 2, 3: the median week number is 26.
+        facts = build_facts(
+            "SKU-1", "NE", forecast_rows([150.0] * 6, start="2025-12-08"), history=history
+        )
+        assert facts.seasonal_position.startswith("a seasonally strong")
+
     def test_anomalies_in_the_history_are_counted_and_quoted(self):
         units = [150.0] * 20 + [0.0] * 5 + [150.0] * 20
         facts = build_facts("SKU-1", "NE", forecast_rows([150.0] * 4), history=history_rows(units))

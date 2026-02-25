@@ -124,12 +124,12 @@ def _seasonal_position(history: pd.Series, forecast_weeks: pd.Series) -> str:
     """Where the forecast window sits against this series' own annual shape."""
     if history.empty or forecast_weeks.empty:
         return "unknown"
-    weeks = pd.to_datetime(forecast_weeks).dt.isocalendar().week
-    mid = int(weeks.median())
-    # Compare the same weeks of previous years against the series' own median.
-    same_period = history[
-        pd.to_datetime(history.index).isocalendar().week.between(mid - 2, mid + 2)
-    ]
+    # Match on the forecast's own weeks of the year, not a window around their
+    # median: a window that crosses New Year (weeks 48..7) has its median in
+    # midsummer, which compared December demand with July's.
+    target_weeks = pd.to_datetime(forecast_weeks).dt.isocalendar().week.astype(int).unique()
+    history_weeks = pd.to_datetime(history.index).isocalendar().week.astype(int)
+    same_period = history[np.isin(history_weeks, target_weeks)]
     if same_period.empty:
         return "unknown"
     ratio = float(same_period.median()) / max(float(history.median()), 1e-9)
