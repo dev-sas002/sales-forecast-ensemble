@@ -1,11 +1,12 @@
-# Dashboard theme. Fonts are loaded in streamlit_demo.py; colours match its
-# palette constants.
+# Dashboard theme. Colours match the palette constants in streamlit_demo.py.
 [theme]
 base = "light"
 primaryColor = "#1f6f5c"
 backgroundColor = "#f6f4ee"
 secondaryBackgroundColor = "#ece8dc"
 textColor = "#1d2a27"
+font = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap, sans-serif"
+codeFont = "'IBM Plex Mono':https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap, monospace"
 
 [browser]
 gatherUsageStats = false

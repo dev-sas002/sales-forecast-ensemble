@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -42,7 +43,8 @@ DEFAULT_API_URL = os.environ.get("API_URL", "http://localhost:8000")
 # One palette, defined once, taken from a stock ledger: pine ink for the
 # model, ochre for uncertainty, brick for anything a planner should check.
 # Colour carries the same meaning in every chart, and every pairing with the
-# paper background clears WCAG AA for text.
+# paper background clears WCAG AA for text. Fonts are set in
+# .streamlit/config.toml.
 INK = "#1d2a27"
 MUTED = "#55625e"
 ACCENT = "#1f6f5c"
@@ -69,17 +71,14 @@ st.set_page_config(
     page_title="SKU Demand Forecasting",
     page_icon=":material/inventory_2:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    # "auto" opens the sidebar on desktop and keeps it out of the way on a phone.
+    initial_sidebar_state="auto",
 )
 
 st.markdown(
     """
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
-  html, body, [class*="st-"], .stMarkdown, button, input, textarea {
-    font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  }
-  .block-container { padding-top: 2rem; padding-left: 1rem; padding-right: 1rem;
+  .block-container { padding-top: 3.75rem; padding-left: 1rem; padding-right: 1rem;
                      max-width: 1360px; }
   h1, h2, h3 { letter-spacing: -0.01em; color: #1d2a27; }
   .hero { border-bottom: 2px solid #1d2a27; padding-bottom: .9rem; margin-bottom: 1.4rem; }
@@ -184,9 +183,11 @@ def render_sidebar(data) -> None:
     st.sidebar.markdown("### Explanation")
     status = narrator_status()
     if status["available"]:
-        st.sidebar.success(f"AI narration on ({status['model']})")
+        line = f"<strong>AI narration on</strong><br>{status['model']}"
     else:
-        st.sidebar.info(f"Template narration — {status['reason']}")
+        reason = re.sub(r"`([^`]+)`", r"<code>\1</code>", status["reason"])
+        line = f"<strong>Template narration</strong><br>{reason}"
+    st.sidebar.markdown(f"<div class='note'>{line}</div>", unsafe_allow_html=True)
 
     if data.errors:
         st.sidebar.markdown("### Read errors")
@@ -649,6 +650,7 @@ def tab_model_quality(data) -> None:
             yref="y2",
             opacity=0.5,
             annotation_text="nominal",
+            annotation_position="top left",
         )
         layout = dict(PLOT_LAYOUT)
         layout["yaxis"] = {**layout["yaxis"], "title": "WAPE (lower is better)"}
@@ -661,6 +663,9 @@ def tab_model_quality(data) -> None:
                 "overlaying": "y",
                 "side": "right",
                 "range": [0, 1],
+                "tickmode": "linear",
+                "tick0": 0,
+                "dtick": 0.2,
                 "tickformat": ".0%",
                 "showgrid": False,
             },
