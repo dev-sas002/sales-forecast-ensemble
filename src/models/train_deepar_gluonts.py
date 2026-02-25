@@ -3,10 +3,8 @@ DeepAR (GluonTS) training stub. Not yet implemented.
 
 **Deliberately not registered.** `src.models.registry.register` is a claim
 that a model is implemented and its output can be believed, and this raises.
-The stale `forecast_deepar.parquet` that used to be committed to this
-repository was blended into every local ensemble run precisely because the
-ensemble trusted a filename instead of the code — so leaving this unregistered
-is what makes that impossible rather than merely unlikely.
+Left unregistered, any `forecast_deepar.parquet` found on disk is treated as
+an orphan and kept out of the ensemble.
 
 To implement it: fit here, then add a class satisfying the `Forecaster`
 protocol and decorate it with `@registry.register`, exactly as

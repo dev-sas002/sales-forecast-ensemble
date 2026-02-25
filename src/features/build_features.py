@@ -2,14 +2,12 @@
 Aggregate linked transactions to SKU x region x week and attach features.
 
 The rule this module exists to enforce: **a feature attached to week t may
-only use information available strictly before week t.** The original version
-broke it. `rolling(4).mean()` was computed on the raw target column, so the
-window at week t included week t's own units — the model was handed a quarter
-of the answer as an input. A leak like that does not raise; it quietly makes
-backtest scores look excellent and live forecasts look broken, which is the
-single most expensive failure mode in forecasting work.
+only use information available strictly before week t.** A `rolling(4).mean()`
+on the raw target would include week t's own units, handing the model a
+quarter of the answer. A leak like that does not raise; it makes backtest
+scores look excellent and live forecasts look broken.
 
-The guarantee is now structural rather than careful. Features are not written
+The guarantee is structural rather than careful. Features are not written
 here at all: they live in :mod:`src.features.registry`, and each one receives
 a :class:`~src.features.registry.History` — the target and price series
 already shifted one period — instead of the DataFrame. There is no accessor on
@@ -50,9 +48,8 @@ KEYS = ["sku", "region"]
 
 #: Bumped when the set of feature columns changes in a way that makes an older
 #: parquet unsafe to train on. `load_feature_table` refuses a mismatch rather
-#: than letting a stale table reach the model — which is exactly how a feature
-#: table carrying the pre-2026-09 leaking `rolling_4w_mean` column stayed
-#: consumable long after the code that wrote it was gone.
+#: than letting a stale table reach the model, because the trainer selects
+#: columns by prefix and would otherwise train on whatever an old build wrote.
 FEATURE_SCHEMA_VERSION = 2
 
 _SIDECAR_SUFFIX = ".schema.json"
@@ -86,12 +83,10 @@ def fill_missing_weeks(weekly: pd.DataFrame) -> pd.DataFrame:
     gaps, `shift(1)` would silently reach across them and call a value from
     three weeks ago "last week".
 
-    Built as integer week offsets rather than dates. The original looped in
-    Python and called `reindex` once per (sku, region); the obvious
-    replacement — one `pd.date_range(freq="W-MON")` per span, then explode —
-    is barely faster, because `W-MON` is a custom offset that pandas walks one
-    step at a time in Python. Profiling a 2,048-series build put 2.7 of 3.7
-    seconds inside `date_range` alone.
+    Built as integer week offsets rather than dates. A per-series `reindex`
+    loop is linear in series on top of rows, and one
+    `pd.date_range(freq="W-MON")` per span is barely faster, because `W-MON`
+    is a custom offset that pandas walks one step at a time in Python.
 
     Weeks are a regular 7-day grid, so none of that is necessary: number the
     weeks from a common Monday epoch, build the complete (series x week) index

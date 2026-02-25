@@ -1,14 +1,9 @@
 """
 Everything the dashboard needs to know, computed without importing Streamlit.
 
-The dashboard was 615 lines with the loading, the derivation and the drawing
-interleaved — `pd.read_parquet` inside a `with tab3:` block, a linkage rate
-computed inline between two `st.metric` calls. That shape has two costs. None
-of the logic can be tested without a browser, and every UI change risks a data
-change, because they are the same lines.
-
-So the split is: this module answers questions, `streamlit_demo.py` draws the
-answers. Nothing here imports `streamlit`, which is the property that keeps
+This module answers questions; `streamlit_demo.py` draws the answers. Kept
+apart so the logic can be tested without a browser and a UI change cannot
+become a data change. Nothing here imports `streamlit`, which is the property that keeps
 the split honest — it is checked by a test.
 """
 

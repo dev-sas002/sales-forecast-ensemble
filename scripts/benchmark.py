@@ -111,7 +111,7 @@ def print_table(title: str, rows: list[Row], unit: str = "s") -> None:
 
 def legacy_fill_missing_weeks(weekly: pd.DataFrame) -> pd.DataFrame:
     """
-    The pre-2026-09-23 gap-filler, kept here purely so the speedup is measured.
+    The per-series reindex gap-filler, kept here purely so the speedup is measured.
 
     Claiming "we vectorised it" without running the version being replaced is
     how benchmarks become marketing. This is a verbatim copy of the loop that
@@ -136,9 +136,8 @@ def bench_features(sizes: list[int], n_weeks: int) -> list[Row]:
     """
     Feature-build cost against catalogue size, old gap-filler against new.
 
-    `fill_missing_weeks` used to loop in Python and `reindex` once per series,
-    which is linear in *series* on top of linear in rows. Both are run here so
-    the difference is a measurement.
+    A per-series `reindex` loop is linear in *series* on top of linear in
+    rows. Both versions are run here so the difference is a measurement.
     """
     from src.features.build_features import add_history_features, fill_missing_weeks
 

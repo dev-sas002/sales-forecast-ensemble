@@ -17,8 +17,8 @@ forecasting projects supply none of them:
    A model with excellent WAPE and 40% coverage is lying about its confidence,
    and only a coverage check catches it.
 
-Since the 2026-09-23 pass the harness measures a fourth thing: whether
-conformal calibration actually repairs the coverage shortfall. The offset is
+It also measures a fourth thing: whether conformal calibration actually
+repairs the coverage shortfall. The offset is
 refitted **inside each fold's own training window** and applied to the weeks
 after the cutoff, so "calibrated coverage" is an out-of-sample number and not
 the tautology you get by scoring a calibration set against the quantile that
@@ -87,19 +87,16 @@ def seasonal_naive(features: pd.DataFrame, targets: pd.DataFrame) -> pd.Series:
     interesting; beating a straw man is not, and beating nothing at all — which
     is what a project with no baseline does — tells the reader nothing.
 
-    Implemented as two merges rather than a row loop. The previous version
-    called `.get()` on a MultiIndex once per scored row inside `itertuples`,
-    which is ~40x slower on a realistic evaluation set (measured; see
-    `scripts/benchmark.py`) and grew linearly in Python rather than in pandas.
+    Implemented as two merges rather than a per-row MultiIndex lookup, which
+    is ~40x slower on a realistic evaluation set (`scripts/benchmark.py`).
     """
     ordered = features.sort_values(KEYS + ["week"])
-    # De-duplicated: a repeated (sku, region, week) made the old `.get()`
-    # return a Series rather than a number.
+    # De-duplicated so a repeated (sku, region, week) cannot fan out the merge.
     history = ordered.drop_duplicates(subset=KEYS + ["week"], keep="last")[
         KEYS + ["week", TARGET]
     ].rename(columns={"week": "_lookup_week", TARGET: "_last_year"})
-    # Sorted before `.last()`: without it the fallback's "last observed week"
-    # was whatever row happened to be last in the frame.
+    # Sorted before `.last()`, so the fallback really is the latest week and
+    # not whichever row happens to be last in the frame.
     fallback = ordered.groupby(KEYS, sort=False)[TARGET].last().rename("_fallback").reset_index()
 
     probe = targets[KEYS].copy()

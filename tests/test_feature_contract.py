@@ -1,15 +1,11 @@
 """
 Tests for the feature-table schema contract.
 
-The second of the two shipped data problems: `features.parquet` was committed
-carrying `rolling_4w_mean` — the *leaking* trailing window from before the
-2026-09-22 fix — while the trainer selects its inputs by the `roll_` prefix.
-Training against that file would have fed the model the leaking column, and
-nothing would have raised.
-
-Deleting the file fixes today. The sidecar fixes the class: a feature table
-now records the registry that produced it, and `load_feature_table` refuses
-one it does not recognise rather than quietly training on it.
+The trainer selects its inputs by the `roll_` prefix, so a feature table
+written by an older registry (say, one carrying a leaking `rolling_4w_mean`)
+would be trained on without anything raising. The sidecar records the
+registry that produced a table, and `load_feature_table` refuses one it does
+not recognise.
 """
 
 from __future__ import annotations

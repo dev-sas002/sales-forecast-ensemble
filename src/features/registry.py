@@ -2,13 +2,10 @@
 The feature registry: the seam for adding a history feature, and the mechanism
 that makes "no look-ahead" structural instead of a promise.
 
-The 2026-09-22 audit established that no feature reaches forward in time and
-pinned it with tests. Those tests check the *current* set of columns. The
-weakness in that arrangement is obvious once you name it: the next person to
-add a feature writes it by hand against the raw frame, and nothing stops them
-reaching for `df["units_sold"].rolling(4)` — the exact line that caused the
-original leak. The test suite would still pass, because it enumerates the
-columns it already knows about.
+Tests that check a fixed list of columns only protect the features that
+exist today. The next person to add one writes it against the raw frame, and
+nothing stops them reaching for `df["units_sold"].rolling(4)`, a window that
+includes the week it describes.
 
 So the registry does two jobs at once.
 

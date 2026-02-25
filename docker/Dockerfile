@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Two stages. The builder compiles wheels; the runtime gets the wheels and the
-# source and nothing else — no compiler, no pip cache, no dev headers. The
-# previous single-stage image shipped its whole build environment.
+# source and nothing else — no compiler, no pip cache, no dev headers.
 #
 # Python 3.11: the pinned scientific stack (numpy 1.26, pandas 2.1) has no
 # wheels for 3.13+, and building it from source in a container is not a thing
@@ -21,9 +20,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-core.txt requirements-dev.txt ./
-# No `|| true`. A failed dependency install used to produce a *successful*
-# build and an image that could not import its own code — the failure was
-# hidden until runtime, which is the worst place to discover it.
+# No `|| true`: a failed dependency install must fail the build, not ship an
+# image that cannot import its own code.
 RUN pip wheel --wheel-dir /wheels -r requirements-core.txt -r requirements-dev.txt
 
 # ---------------------------------------------------------------- runtime ---

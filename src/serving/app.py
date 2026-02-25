@@ -4,14 +4,10 @@ FastAPI surface over the forecast artifacts.
 Deliberately thin. Every handler here does three things — validate, call one
 service, shape the response — and nothing else. Reading parquet lives in
 :mod:`src.serving.store`, anomaly rules live in :mod:`src.quality.anomalies`,
-explanation lives in :mod:`src.explain`. That is not ceremony: the previous
-version did its own `pd.read_parquet` and its own filtering inside the route
-function, which is why the caching fix had to be a rewrite of the endpoint
-rather than a change to one module, and why none of that logic could be
-exercised without an HTTP client.
+explanation lives in :mod:`src.explain`, so each can be tested without an
+HTTP client and the forecast cache can change without touching a route.
 
-Dependencies point inward. The store knows nothing about FastAPI; this module
-knows nothing about parquet.
+Dependencies point inward: the store knows nothing about FastAPI.
 """
 
 from __future__ import annotations
@@ -37,7 +33,7 @@ app = FastAPI(
 )
 
 #: Derived from config.QUANTILES rather than hardcoded, so adding a quantile
-#: to the pipeline does not silently leave the API serving the old three.
+#: to the pipeline changes what the API serves too.
 FORECAST_COLS = quantile_cols()
 
 #: Upper bound on a request. The pipeline writes 12 weeks by default; this is
@@ -98,9 +94,8 @@ async def models() -> dict:
     """
     Which forecasters this build implements, and what is on disk.
 
-    Exposed because the ensemble's composition used to be invisible: a stale
-    `forecast_deepar.parquet` with no producer was being blended into every
-    served forecast and nothing said so. Orphans are now named here.
+    Orphan forecast files (no registered producer, so excluded from the
+    ensemble) are named here so the blend's composition is never a guess.
     """
     _, orphans = registry.scan_forecasts(FEATURE_DIR)
     return {

@@ -1,10 +1,6 @@
 """
-Pytest configuration: put the repo root on sys.path so `src` is importable.
-
-The previous version computed `Path(__file__).resolve().parent`, which is the
-tests/ directory — not the repo root its own comment claimed. It inserted a
-path that makes nothing importable; `import src` worked only because pytest
-happened to add the rootdir itself.
+Pytest configuration: put the repo root (not tests/) on sys.path so `src` is
+importable however pytest was invoked.
 """
 
 from __future__ import annotations

@@ -3,10 +3,8 @@ Tests for src.config: path resolution and environment overrides.
 
 config is a module whose values are computed at import from the environment,
 so every test here reloads it under a controlled environment and restores it
-afterwards. The previous version asserted the *default* DATA_DIR without
-clearing DATA_DIR first, so the test passed on a bare checkout and failed
-inside the container — where DATA_DIR is legitimately set — for a reason that
-had nothing to do with the code being wrong.
+afterwards. Defaults are asserted with DATA_DIR cleared first, because the
+container sets it legitimately.
 """
 
 from __future__ import annotations

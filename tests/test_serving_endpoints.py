@@ -1,9 +1,7 @@
 """
-Tests for the endpoints added in the 2026-09-23 pass: /models, /anomalies,
-/explain.
+Tests for /models, /anomalies and /explain.
 
-`test_serving.py` covers the original /health and /forecast contract; this
-covers the new surface. The load-bearing assertion in the whole file is that
+`test_serving.py` covers the /health and /forecast contract. The load-bearing assertion in the whole file is that
 `/explain` returns 200 with no `ANTHROPIC_API_KEY` set — an AI feature that
 takes the product down when a key is missing is not a feature.
 """

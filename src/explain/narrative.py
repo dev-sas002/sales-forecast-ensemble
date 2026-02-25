@@ -79,7 +79,7 @@ def narrator_status() -> dict[str, object]:
     """
     Whether AI narration is available, and why not if it is not.
 
-    Surfaced in the dashboard and at `/health` so the degraded path is visible
+    Surfaced in the dashboard and at `/models` so the degraded path is visible
     rather than silent — an AI feature that has quietly stopped working and is
     serving templates is worse than one that says so.
     """
@@ -115,7 +115,7 @@ def render_template(facts: ForecastFacts) -> str:
 
     Every sentence here is a direct restatement of a field. That is the point —
     it is the floor the AI path is measured against, and it is what runs in
-    tests, in CI, and on any machine with no credentials.
+    the tests and on any machine with no credentials.
     """
     parts = [
         f"{facts.sku} in {facts.region}: the model expects "

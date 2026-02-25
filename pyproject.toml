@@ -27,7 +27,7 @@ select = [
     "RUF",
 ]
 ignore = [
-    "E501",    # line length is handled by the formatter, not by failing CI
+    "E501",    # line length is the formatter's job, not the linter's
     "B008",    # FastAPI's Depends()/Field() idiom is a call in a default
     "RUF001",  # the prose in docstrings uses real typographic characters
     "RUF002",

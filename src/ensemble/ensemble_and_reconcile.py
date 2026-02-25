@@ -1,30 +1,18 @@
 """
 Combine per-model quantile forecasts into one set.
 
-Two defects shaped this module, and both were the kind that produce
-plausible-looking numbers rather than an error.
+Two rules, both against errors that produce plausible numbers rather than
+an exception.
 
-**It halved forecasts.** The original outer-joined the two models and averaged
-with `.fillna(0)`:
+**A missing model does not vote zero.** Forecasts are outer-joined, and a
+quantile is averaged over the models that produced a row. Filling the gap with
+0 instead would report half of the one model's forecast for that week, and a
+halved demand forecast is the kind of error that reaches a purchase order.
 
-    df["q0.5"] = 0.5 * df["q0.5_lgb"].fillna(0) + 0.5 * df["q0.5_deepar"].fillna(0)
-
-Wherever one model had no row for a series-week — which is exactly what an
-outer join is for — the missing side contributed a *zero*, and the ensemble
-reported half of the forecast the other model had actually made. Silently
-halving a demand forecast is the kind of error that reaches a purchase order.
-Here a quantile is averaged over the models that produced it, and a row only
-one model covers keeps that model's value.
-
-**It blended an artifact with no producer.** The source list was a literal
-dict naming `forecast_deepar.parquet`, and that file was committed to the
-repository from a long-dead toy dataset. The DeepAR trainer has only ever been
-a stub that raises `NotImplementedError`, so nothing in the codebase could
-have written it — yet every local run loaded those 36 stale rows and averaged
-them into the served forecast. Which models exist is not a fact about the
-filesystem; it is a fact about the code, and the code now says so:
-:mod:`src.models.registry` is the source of truth, and a `forecast_*.parquet`
-no registered model produces is reported as an orphan and left out.
+**Only registered models are blended.** Which models exist is a fact about the
+code, not the filesystem: :mod:`src.models.registry` is the source of truth,
+and a `forecast_*.parquet` no registered model produces is reported as an
+orphan and left out.
 """
 
 from __future__ import annotations

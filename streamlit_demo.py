@@ -2,10 +2,9 @@
 The SKU forecasting dashboard.
 
 Presentation only. Every number shown here is computed in `src.dashboard.data`
-or in the pipeline modules it reads from; this file decides how to draw them.
-The previous version interleaved `pd.read_parquet`, derivation and layout in
-one 615-line function, which meant none of the logic could be tested without a
-browser and every layout change risked a data change.
+or in the pipeline modules it reads from; this file decides how to draw them,
+so the logic is testable without a browser and a layout change cannot change
+a number.
 
 Run it with:
     streamlit run streamlit_demo.py

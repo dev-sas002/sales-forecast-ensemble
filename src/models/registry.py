@@ -1,25 +1,13 @@
 """
-The model registry: how a second learner gets added, and why the ensemble can
-no longer blend a file nothing wrote.
+The model registry: how a second learner gets added, and why the ensemble
+cannot blend a file nothing wrote.
 
-The ensemble used to hold a literal dict of `{model name: filename}` and load
-whatever was on disk:
-
-    SOURCES = {"lgb": "forecast_lgb.parquet", "deepar": "forecast_deepar.parquet"}
-
-Both halves of that are a problem. It is the wrong extension point — adding a
-learner means editing a constant in a *downstream* module, which is exactly
-backwards — and it trusts the filesystem. `forecast_deepar.parquet` was a
-committed artifact from a toy dataset; the DeepAR trainer has never been more
-than a stub that raises. So every local ensemble run blended 36 rows of stale
-numbers for a model that does not exist, silently, and the resulting
-`forecast_ensemble.parquet` was what the API served.
-
-Here a forecast file is only trusted when a registered, *implemented*
-forecaster claims it. A parquet matching the forecast naming convention that
-no registered model produces is an orphan: reported by name, and excluded.
-A blend can no longer depend on an artifact with no producer without someone
-having asked for it in writing.
+A literal `{model name: filename}` dict in the ensemble would be the wrong
+extension point (adding a learner would mean editing a downstream constant)
+and would trust whatever happens to be on disk. Here a forecast file is only
+trusted when a registered, *implemented* forecaster claims it. A parquet
+matching the naming convention that no registered model produces is an
+orphan: reported by name, and excluded unless someone asks for it explicitly.
 
 Adding a learner:
 
@@ -77,11 +65,9 @@ class Forecaster(Protocol):
 _REGISTRY: dict[str, Forecaster] = {}
 
 #: Modules whose import registers a built-in forecaster. Registration is an
-#: import side effect, which is convenient at the definition site and fragile
-#: everywhere else: whether "lgb" was registered depended on whether some
-#: unrelated module had already imported the trainer. `/models` reported an
-#: empty list for exactly that reason. Every read of the registry now loads
-#: these first, so the answer does not depend on import order.
+#: import side effect, so without this the answer to "is lgb registered?"
+#: would depend on whether some unrelated module had imported the trainer yet.
+#: Every read of the registry loads these first.
 _BUILTIN_MODULES = ("src.models.train_lgb_quantile",)
 _loaded = False
 

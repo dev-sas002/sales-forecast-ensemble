@@ -1,18 +1,15 @@
 """
 Paths and settings, resolved from the environment.
 
-Importing this module has no side effects. It previously created four
-directories at import time, which meant that merely importing config — as
-every module and every test does — could fail with PermissionError against a
-read-only or root-owned path, taking down test *collection* rather than a
-single test. Creating directories is an action; call ensure_dirs() where you
-intend it.
+Importing this module has no side effects. Every module and every test
+imports it, so a mkdir here could fail with PermissionError on a read-only
+path and take down test collection. Creating directories is an action; call
+ensure_dirs() where you intend it.
 
 **Inputs and outputs live in different places.** `DATA_DIR` is the pipeline's
 working directory and is git-ignored; `EXAMPLES_DIR` holds the two committed
-CSVs that document the expected input schema and is never written to. They
-used to be the same directory, which is what allowed a derived artifact to be
-committed, go stale, and then be silently consumed by a later run.
+CSVs that document the expected input schema and is never written to, so no
+derived artifact can be committed beside them, go stale and be read back.
 """
 
 from __future__ import annotations

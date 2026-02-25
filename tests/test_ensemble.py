@@ -1,10 +1,9 @@
 """
 Tests for combining model forecasts.
 
-The bug these are built around: the previous implementation outer-joined the
-two models' forecasts and averaged with `.fillna(0)`, so a week only one model
-covered came out at half that model's forecast. It never raised, and the output
-looked entirely reasonable.
+The failure these guard against: averaging an outer join with `.fillna(0)`,
+so a week only one model covered comes out at half that model's forecast. It
+never raises, and the output looks entirely reasonable.
 """
 
 from __future__ import annotations
