@@ -1,0 +1,5 @@
+panel_id,customer_id,age_group,region,income_bin,household_size
+p1,C001,35-54,NE,50-75k,3
+p2,C002,35-54,NE,50-75k,2
+p3,C003,55+,W,35-50k,2
+p4,C004,35-54,NE,50-75k,4
