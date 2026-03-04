@@ -1,0 +1,36 @@
+# Keep the build context small and the image free of host state. Anything
+# derived, secret, or large enough to slow a build down stays out.
+.git
+.gitignore
+.github
+
+# Virtualenvs — host-built, wrong platform, and hundreds of megabytes.
+.venv
+venv
+env
+project_venv
+**/*.egg-info
+
+# Pipeline output. The image builds the pipeline; it does not ship its results.
+data/
+artifacts/
+
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov/
+.mypy_cache
+
+# Documentation images are for the README on GitHub, not for the runtime.
+docs/screenshots/
+README.preview.html
+
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+!.env.example

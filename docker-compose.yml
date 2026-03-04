@@ -1,0 +1,74 @@
+# One image, three entry points. The `seed` service runs the pipeline once
+# into a named volume that the API and the dashboard then read, so
+# `docker compose up` gives you a populated system rather than two containers
+# showing empty states — and so the containers share state the way the real
+# deployment would rather than each rebuilding it.
+#
+# Host ports are 8360/8361 rather than 8000/8501 because those collide with
+# everything else on a developer laptop.
+services:
+  seed:
+    build: { context: ., dockerfile: docker/Dockerfile }
+    image: sku-forecasting:local
+    container_name: forecast_seed
+    # 130 weeks of seeded synthetic transactions through ingest, linkage,
+    # features, training and the ensemble. Runs once and exits 0.
+    command: ["python", "-m", "scripts.run_pipeline", "--weeks", "130", "--horizon", "12"]
+    environment:
+      DATA_DIR: /data
+      HASH_SALT: local-dev-salt-not-a-secret
+      MLFLOW_TRACKING_URI: ""
+    volumes: ["forecast_data:/data"]
+
+  api:
+    build: { context: ., dockerfile: docker/Dockerfile }
+    image: sku-forecasting:local
+    container_name: forecast_api
+    ports: ["8360:8000"]
+    environment:
+      DATA_DIR: /data
+      HASH_SALT: local-dev-salt-not-a-secret
+      MLFLOW_TRACKING_URI: ""
+      # Optional. Unset, /explain returns a template-rendered note and every
+      # endpoint still works — see src/explain/narrative.py.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    volumes: ["forecast_data:/data"]
+    depends_on:
+      seed: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+
+  dashboard:
+    build: { context: ., dockerfile: docker/Dockerfile }
+    image: sku-forecasting:local
+    container_name: forecast_dashboard
+    command:
+      - streamlit
+      - run
+      - streamlit_demo.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+      - --server.headless=true
+      - --browser.gatherUsageStats=false
+    ports: ["8361:8501"]
+    environment:
+      DATA_DIR: /data
+      # "localhost" inside this container is the dashboard, not the API.
+      API_URL: http://api:8000
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    volumes: ["forecast_data:/data"]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+
+volumes:
+  forecast_data:
